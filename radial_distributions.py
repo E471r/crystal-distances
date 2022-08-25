@@ -72,14 +72,14 @@ def get_radial_distributions_traj_(R : np.ndarray,     # xyz.coordinates[i]
             
             ds = np.linalg.norm(dX, axis=-1) # (K,)
 
-            ds = ds[np.where(ds <= half_min_box_length)[0]] ; counts[i] = ds.shape[0]
+            ds = ds[np.where(ds <= half_min_box_length)[0]] ; counts[i] = ds.shape[0] / m
             ds = ds[np.where(ds >= min_distance)[0]]
             list_ds.append(ds)
     else:
         # Old method when ignoring pbc:
         for i in range(N):
             ds = cdist_(COMs[i], COMs[i], metric='euclidean')[triu_inds]
-            ds = ds[np.where(ds <= half_min_box_length)[0]] ; counts[i] = ds.shape[0]
+            ds = ds[np.where(ds <= half_min_box_length)[0]] ; counts[i] = ds.shape[0] / m
             ds = ds[np.where(ds >= min_distance)[0]]
             list_ds.append(ds)
 
