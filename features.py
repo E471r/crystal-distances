@@ -242,10 +242,10 @@ def get_landmark_CsCt_list_(csAs, cs_landmarks, gamma : float = 1.0):
     CsCt_list = []
     for i in range(len(csAs)):
         G = get_gram_features_(csAs[i], cs_landmarks, gamma = gamma)[0] # (N,m,m2)
-        N = G.shape[0]
+        N = G.shape[0] ; m = G.shape[1] 
         for j in range(N):
             W = G[j] # W ~ (m,m2)
-            C = W.T.dot(W) # (m2,m2)
+            C = W.T.dot(W)/m # (m2,m2)
             C_sqrt = psd_mat_power_(C, 0.5) # (m2,m2) # m2 is constant.
             C_trace = np.trace(C)
             CsCt_list.append( [C_sqrt, C_trace] )
