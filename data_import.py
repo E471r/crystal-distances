@@ -162,6 +162,8 @@ class XYZ:
 
                                apply_no_jump : bool = False,
                                no_jump_method : str = 'gmx',
+			       apply_local_no_jump_to  : str or list= 'all',
+			       
                                center_supercells : bool = False,
                                verbose : int = 2,
                                ):
@@ -174,10 +176,15 @@ class XYZ:
             stride : int.
             only_n_frames_from_ends : bool or int : remove frames from the middle of trakectories. keep n frames from ends.
             stack_n_consecutive_frames : bool or int : False or molecules from neighbouring n frames pooled on top of each other.
-            apply_no_jump : bool : False here because this was already done in gromacs prior (faster).
-                # TODO: test again if True case is still working.
+            
+	    apply_no_jump : bool : False here because this was already done in gromacs prior (faster).
+                # TODO: test again if True case is still working. # ~yes
             no_jump_method : str : 'gmx' or 'anystring' 
-                # TODO: test again if apply_no_jump working.
+                # TODO: test again if apply_no_jump working. # ~yes
+            apply_local_no_jump_to : # in a few cases gmx cant do nojump correctly in certain NPT sim.
+                 any str -> applied to all indices_trajs
+                 list as subset of  indices_trajs -> applied for only those selected
+		
             center_supercells : bool : not implemented.
             verbose : int : 0 = silent, 1 = loading bar, 2 = text with names (not loading bar).
         Outputs:
@@ -230,14 +237,16 @@ class XYZ:
             else: pass            
             
             if stride > 1:
-                stride_inds = np.arange(0, R.shape[0], stride)                
+                stride_inds = np.arange(0, R.shape[0], stride)
                 R = R[stride_inds] ; boxes = boxes[stride_inds]
             else: pass
 
             if apply_no_jump and not apply_gmx_no_jump:
                 if not self.nj_imported_once: from utils_jit import no_jump_ ; self.nj_imported_once =  True
                 else: pass
-                R = no_jump_(R, boxes)
+                if type(apply_local_no_jump_to) == str: R = no_jump_(R, boxes)
+                elif ind in apply_local_no_jump_to:     R = no_jump_(R, boxes)
+                else: pass 
             else: pass
             
             if center_supercells:
