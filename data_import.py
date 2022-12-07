@@ -161,7 +161,7 @@ class XYZ:
                                stack_n_consecutive_frames : int = False,
 
                                apply_no_jump : bool = False,
-                               no_jump_method : str = 'gmx',
+                               no_jump_method : str = 'local', #'gmx',
 			       apply_local_no_jump_to  : str or list= 'all',
 			       
                                center_supercells : bool = False,
