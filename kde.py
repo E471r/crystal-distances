@@ -298,7 +298,7 @@ class KDE:
         px = np.array(wrapper_(einsum__, self.string_px + list_Wt + [self._histogram] ))
 
         if return_gradient is False:
-            return px 
+            return px*c_px
         else:
             dp_dx = np.zeros([n_effective,self.dim])
             for k in range(self.dim):
