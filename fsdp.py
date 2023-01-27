@@ -1,11 +1,8 @@
-from re import A, X
 import numpy as np
 
 import matplotlib.pyplot as plt
 
 from utils import sta_array_, TIMER
-
-from utils_jit import cdist_, cdist_rbf_
 
 ##
 
@@ -154,8 +151,8 @@ def d1_decision_flat_(pd : np.ndarray, cut_off : float = 0.5, verbose: bool = Tr
 class FSDP:
     ''' Wrapper class for the three FSDP functions above, to organise the steps:
     
-        Minimal example:
-        cluster_assignments = FSDP(x = D, x_is_distance_matrix = True, co = 0.01).return_cluster_assignments()
+        ## Minimal example: [not valid now]
+        ## cluster_assignments = FSDP(x = D, x_is_distance_matrix = True, gamma = 0.01).return_cluster_assignments()
             
     '''
     def __init__(self,
@@ -225,10 +222,11 @@ class FSDP:
         return self.cluster_assignments
 
     def evaluate_(self, y, verbose : bool = True):
+        ''' not sure if this works.
+        '''
         Ny = y.shape[0]
         y_cluster_assignments = []
         if self.x_is_distance_matrix:
-            print('y should be D ~ (Ny,Nx)')
             print('not implemented')
         else:
             if verbose: timer = TIMER(Ny) ; a = 0
