@@ -92,6 +92,7 @@ class KDE:
                  n_bins : list or int = 40,
                  param : list or float = 200,
                  verbose : bool = True,
+		 longdataset_block_size = None,
                  ):  
         """ info_KDE_()
         """
@@ -184,7 +185,22 @@ class KDE:
         self.periodic = periodic
             
         self.letters = 'abcdefghvwxyz'
-        self.place_WF_matrices_and_the_histogram_(x)
+	self.list_letters = ['i' + self.letters[k] + ',' for k in range(self.dim)]
+        ##
+        # ['ia,ib,ic->abc']
+        #string_h = ''.join(['i'+_+',' for _ in self.letters[:self.dim]])[:-1]+'->'+''.join(_ for _ in self.letters[:self.dim])
+        self.string_h = [''.join(self.list_letters)[:-1] + '->' + self.letters[:self.dim]]
+        
+        # ['ia,ib,ic,abc->i']
+        #string_px = ''.join(['i'+_+',' for _ in self.letters[:self.dim]])+''.join(_ for _ in self.letters[:self.dim])+'->'+'i'
+        self.string_px = [''.join(self.list_letters) + self.letters[:self.dim] + '->i']
+        
+        # [['ib,ic,abc,ia->i'], ['ia,ic,abc,ib->i'], ['ia,ib,abc,ic->i']]
+        self.strings_dp_dx = [[''.join(self.list_letters[:k] + self.list_letters[k+1:]) + self.letters[:self.dim] + ',' + self.list_letters[k][:-1] +'->i'] for k in range(self.dim)]
+        ##
+	
+        if longdataset_block_size is None: self.place_WF_matrices_and_the_histogram_(x)
+        else: self.place_histogram_longdataset_(x, block_size = longdataset_block_size) # need to use evalute points to get p(x) when this is used, because the necesary matrices are not stored to prevent momory overload.
 
     def fit_x_to_01_(self, x):
         x_out = np.zeros([x.shape[0], self.dim])
@@ -202,8 +218,6 @@ class KDE:
         self.list_Wt = []
         self.list_Ft = []
 
-        self.list_letters = []
-	
         weights = self.weights**(1/self.dim)
         for k in range(self.dim):
             W_k, Wt_k, Ft_k = self.mixed_BCs[k](x[:,k], n_bins=self.n_bins[k], param=self.param[k])
@@ -211,24 +225,39 @@ class KDE:
             self.list_Wt.append(clamp_type_(Wt_k))
             self.list_Ft.append(clamp_type_(Ft_k))
 
-            self.list_letters.append('i' + self.letters[k] + ',')
-        ##
-        # ['ia,ib,ic->abc']
-        #string_h = ''.join(['i'+_+',' for _ in self.letters[:self.dim]])[:-1]+'->'+''.join(_ for _ in self.letters[:self.dim])
-        self.string_h = [''.join(self.list_letters)[:-1] + '->' + self.letters[:self.dim]]
-        
-        # ['ia,ib,ic,abc->i']
-        #string_px = ''.join(['i'+_+',' for _ in self.letters[:self.dim]])+''.join(_ for _ in self.letters[:self.dim])+'->'+'i'
-        self.string_px = [''.join(self.list_letters) + self.letters[:self.dim] + '->i']
-        
-        # [['ib,ic,abc,ia->i'], ['ia,ic,abc,ib->i'], ['ia,ib,abc,ic->i']]
-        self.strings_dp_dx = [[''.join(self.list_letters[:k] + self.list_letters[k+1:]) + self.letters[:self.dim] + ',' + self.list_letters[k][:-1] +'->i'] for k in range(self.dim)]
-        ##
-        
         self._histogram = np.array(wrapper_(einsum__, self.string_h + list_W  )) / self.N_effective
         self._histogram /= self._histogram.sum()
         self._histogram = clamp_type_(self._histogram)
+	
+    def place_histogram_longdataset_(self, x : np.ndarray, block_size = 2000):
+        N = x.shape[0]
+        block_size = min(block_size,N)
+        n_block = N//block_size 
+        n_remainder = N%block_size
 
+        weights = self.weights**(1/self.dim)
+        _histogram = 0.0 
+        for i in range(n_block):
+            a = i*block_size
+            b = (i + 1)*block_size
+            list_W = []
+            for k in range(self.dim):
+                W_k = self.mixed_BCs[k](x[a:b,k], n_bins=self.n_bins[k], param=self.param[k], tight=self.tight, test=self.test)[0]
+                list_W.append(clamp_type_(W_k * weights[a:b]))
+            _histogram += np.array(wrapper_(einsum__, self.string_h + list_W  ))
+            
+        if n_remainder == 0: pass
+        else:
+            list_W = []
+            for k in range(self.dim):
+                W_k = self.mixed_BCs[k](x[-n_remainder:,k], n_bins=self.n_bins[k], param=self.param[k], tight=self.tight, test=self.test)[0]
+                list_W.append(clamp_type_(W_k * weights[-n_remainder:]))    
+            _histogram += np.array(wrapper_(einsum__, self.string_h + list_W  ))  
+
+        self._histogram = _histogram / self.N_effective
+        self._histogram /= self._histogram.sum()
+        self._histogram = clamp_type_(self._histogram)
+	
     @ property
     def histogram(self):
         return np.array(self._histogram)
