@@ -181,16 +181,15 @@ def get_gram_features_(csAs, cs_landmarks, gamma : float or np.ndarray = 1.0):
     return Gs
 
 def get_landmark_histograms_(csAs, cs_landmarks, gamma : float = 1.0, force_normalise : bool = True):
+    gamma = float(gamma)
     ''' 
-    !! EXPERIMENTAL
-
     Input:
         csAs : list [(N,m,dim) shaped array of normalised torsional features.]
             N = # frames
             m = # molecules
             dim = 2*n_torsions
         cs_landmarks : (m2,dim) shaped array.
-            m2 = # landmark molecules (centroids).
+            m2 = # landmark molecules (centroids or random without replacement).
         gamma : float or (m2,) shaped vector, bandwidth for the gram matrices.
             if vector : gamma = [alpha * (0.5/Var[i]**2) for i in n_clusters]
         force_normalise : bool.
@@ -217,9 +216,8 @@ def get_landmark_histograms_(csAs, cs_landmarks, gamma : float = 1.0, force_norm
     return Hs
 
 def get_landmark_CsCt_list_(csAs, cs_landmarks, gamma : float = 1.0):
+    gamma = float(gamma)
     ''' 
-    EXPERIMENTAL # Best landmark method. Keep.
-
     Input:
         csAs : list [(N,m,dim) shaped array of normalised torsional features.]
             N = # frames
