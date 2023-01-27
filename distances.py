@@ -4,7 +4,26 @@ from utils_jit import cdist_
 
 from utils import sta_array_, psd_mat_power_, clamp_list_, TIMER
 
+from features import get_landmark_histograms_
+
 ##
+
+def KL_discrete_(hA):
+    # hA : (Nx, 1, n_bins) shaped array.
+    h = np.array(hA[:,0,:]) # (N,b)
+    ln_h = np.log(h+1e-7)   # (N,b)
+    
+    hi_lhi = np.sum(h*ln_h, axis=-1, keepdims=True) # (N,1)
+
+    D_KL = hi_lhi + hi_lhi.T # (N,N)
+    
+    timer = TIMER(h.shape[0])
+    for i in range(h.shape[0]):
+        D_KL[i] -= np.sum( h[i:i+1] * ln_h, axis=1) + np.sum( h * ln_h[i:i+1], axis=1)
+        timer.check_(i)
+        
+    return 0.5*D_KL
+
 
 def hellinger_distance_(X : np.ndarray, Y : np.ndarray = None, normalise_histograms : bool = True):
     '''
@@ -107,7 +126,16 @@ def SO_distance_element_(Input : list = None, # [C1,C2]
     
     return 1.0 - overlap
 
-def SO_distance_(CsCt_list_X : list, CsCt_list_Y : list = None):
+def SOL_distance_(CsCt_list_X : list, CsCt_list_Y : list = None):
+    ''' SOL
+    example (symmetric distance matrix): 
+    ready_distance_matrix = SOL_distance_( get_landmark_CsCt_list_(cs_As,
+                                                                   cs_As_molecules, 
+                                                                   gamma = float(gamma)
+                                                                   ),
+                                           CsCt_list_Y = None,
+                                          )
+    '''
     X = CsCt_list_X
     Y = CsCt_list_Y
 
@@ -131,6 +159,13 @@ def SO_distance_(CsCt_list_X : list, CsCt_list_Y : list = None):
                 Output[i,j] = d
         return Output
 
+ def HDL_distance_(csAs, lands, gamma = 1.5):
+    ''' HDL (only symmetric version here)
+    '''
+    h = get_landmark_histograms_(clamp_list_(csAs), lands, gamma = gamma, force_normalise=True)
+    HD = hellinger_distance_(h)
+    return HD #* 4.8 / np.sqrt(h.shape[-1])
+    
 ## Depreciated:
 
 '''
