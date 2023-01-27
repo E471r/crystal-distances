@@ -31,7 +31,7 @@ def unitvectors_supervised_(R, three_atom_indices):
     u2 = np.cross(u0, u1)                                                    # normal to oop and op.
 
     return np.stack([u0,u1,u2], axis=-2) # (N,m,3_vectors,3)
-
+'''
 class Unitvectors_Unsupervised:
     """ ! Experimental.
 
@@ -152,7 +152,7 @@ class Unitvectors_Unsupervised:
                 Output[i,j,0] = u0
                 Output[i,j,1] = u1
         return Output
-
+'''
 def get_rotational_hists_traj_(R,
                                supervised = [3,6,9], 
                                n_bins = 20,
@@ -189,6 +189,7 @@ def get_rotational_hists_traj_(R,
         U = supervised.evaluate_(R) # ~ (N,m,3_vectors,2or3)
     else:
         print("please review the input for the argument called 'supervised'.")
+        print("unsupervied functionality depreciated, untill this file is reviewed.")
 
     if d3_histograms:
         u0, u1, u2, d = U[:,:,0], U[:,:,1], U[:,:,2], 3
