@@ -3,8 +3,11 @@ import numpy as np
 from utils import clamp_list_
 
 try: import tensorflow as tf 
-except: print('no tensorflow found. This only effects tsne_() which is not used.')
+except: print('no tensorflow found. This only effects not_tsne_() which is not used.')
 
+''' TODO: delete.
+'''
+    
 ## PCA:
 
 class cPCA:
@@ -108,9 +111,9 @@ class cPCA:
         z = self.torus_(z.real, z.imag)
         return z
 
-## tSNE:
+## not_tSNE:
 
-def tsne_(D,                    # distance matrix.
+def not_tsne_(D,                    # distance matrix.
           lr : float = 0.0001,  # learning rate.
           n_itter : int = 1000, # number of optimisation steps
           dim : int = 3,        # dimension to visualise (2 or 3).
