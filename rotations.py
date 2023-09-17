@@ -154,7 +154,7 @@ class Unitvectors_Unsupervised:
         return Output
 '''
 def get_rotational_hists_traj_(R,
-                               supervised = [3,6,9], 
+                               supervised = [3,7,9], 
                                n_bins = 20,
                                use_kde = False,
                                kde_parameter = 100,
