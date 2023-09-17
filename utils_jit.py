@@ -297,7 +297,7 @@ def clamp_shape_traj_(x, minimum_shape=3):
     elif len(shape) != minimum_shape+1: print('!! input wrong shape')
     else: return x
 	    
-"""
+#"""
 def reciprocal_boxes_(boxes, vector_axis=-2):
     v1 = np.take(boxes, 0, axis=vector_axis)
     v2 = np.take(boxes, 1, axis=vector_axis)
@@ -326,8 +326,6 @@ def remove_PBC_traj_(coordiantes,
     boxes = np.array(boxes, dtype=np.float64)
     coordiantes = clamp_shape_traj_(coordiantes, minimum_shape=3) # -> [N,m,n,3] ; N >=1
     boxes = clamp_shape_traj_(boxes, minimum_shape=2)             # -> [N,3,3]   ; N >=1
-    print(coordiantes.shape)
-    print(boxes.shape)
     
     if box_vectors_are_columns: axis = -2
     else :                      axis = -1
@@ -343,7 +341,7 @@ def remove_PBC_traj_(coordiantes,
     return  coordiantes.astype(np.float32) # whole molecules can be jumping around on the edges as the box evolves, that is fine.
 
 no_jump_ = remove_PBC_traj_
-"""
+#"""
 ##
 
 try:
@@ -360,12 +358,10 @@ try:
     interval_W_F_ = jit(nopython = True, fastmath = True)(interval_W_F_)
 	
     # no jump:
-    no_jump_ =  jit(nopython = True, fastmath = True)(no_jump_)
-    wrap_COMs_ = jit(nopython = True, fastmath = True)(wrap_COMs_)
+    #no_jump_ =  jit(nopython = True, fastmath = True)(no_jump_)
+    #wrap_COMs_ = jit(nopython = True, fastmath = True)(wrap_COMs_)
     #
 
 except:
     print('!! : utils_jit : could not import numba.jit.')
-
-
 
