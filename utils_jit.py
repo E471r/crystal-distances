@@ -322,7 +322,7 @@ def remove_PBC_traj_(coordiantes,
                      boxes,
                      box_vectors_are_columns = True
                     ):
-    ccoordiantes = np.array(coordiantes, dtype=np.float64)
+    coordiantes = np.array(coordiantes, dtype=np.float64)
     boxes = np.array(boxes, dtype=np.float64)
     coordiantes = clamp_shape_traj_(coordiantes, minimum_shape=3) # -> [N,m,n,3] ; N >=1
     boxes = clamp_shape_traj_(boxes, minimum_shape=2)             # -> [N,3,3]   ; N >=1
