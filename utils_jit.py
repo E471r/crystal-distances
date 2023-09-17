@@ -208,8 +208,8 @@ def interval_W_F_(x, n_bins : int =32, param : float or int = 1.0):
 
     return W, W_tilde, F_tilde # = W, W_tilde, F_tilde
 
-## no jump (make molecules whole and not jumping):
-
+## no jump (make molecules whole):
+"""
 #@jit(nopython=True, fastmath = True)
 def no_jump_(R_in : np.ndarray,
              boxes : np.ndarray, # (3,3) vecs as columns!
@@ -285,8 +285,51 @@ def wrap_COMs_(Rijl : np.ndarray,
 
                 if (mask_p - mask_n).sum() == 0: pass
                 else: R_out[i, mol] -= ( boxes[i] * (mask_p + mask_n) ).sum(1)
-                    
     return R_out
+"""
+def clamp_shape_traj_(x, minimum_shape=3):
+    """ if single frame without axis for frames, adding one more axis to the beginning.
+    """
+    shape = list(x.shape)
+    if len(shape) == minimum_shape:
+        return x.reshape([1]+shape)
+    elif len(shape) != minimum_shape+1: print('!! input wrong shape')
+    else: return x
+
+def wrap_traj_np_(coordiantes,  # (...,m_molecules, n_atoms_mol, 3)
+                  boxes,        # (...,3, 3)
+                  box_vectors_are_columns = True,
+                 ):
+    if box_vectors_are_columns: string = '...jkl,...ml->...jkm'
+    else:                       string = '...jkl,...lm->...jkm'
+    return np.einsum(string, np.mod(np.einsum(string, coordiantes, np.linalg.inv(boxes)), 1.0), boxes)
+
+def remove_PBC_traj_(coordiantes,
+                     boxes,
+                     box_vectors_are_columns = True
+                    ):
+    coordiantes = clamp_shape_traj_(coordiantes, minimum_shape=3) # -> [N,m,n,3] ; N >=1
+    boxes = clamp_shape_traj_(boxes, minimum_shape=2)             # -> [N,3,3]   ; N >=1
+    print(coordiantes.shape)
+    print(boxes.shape)
+    
+    if box_vectors_are_columns: axis = -2
+    else :                      axis = -1
+    half_box_lengths = 0.5*np.linalg.norm(boxes, axis=axis)[:,np.newaxis,np.newaxis,:]
+    
+    # make molecules whole:
+    some_atom_in_molecules = coordiantes[:,:,:1,:] - half_box_lengths
+    coordiantes = wrap_traj_np_(coordiantes - some_atom_in_molecules, boxes, box_vectors_are_columns=box_vectors_are_columns) + some_atom_in_molecules
+    
+    # make that atom be inside box:
+    some_atom_in_molecules = coordiantes[:,:,:1,:]
+    coordiantes = coordiantes - some_atom_in_molecules + wrap_traj_np_(some_atom_in_molecules, boxes, box_vectors_are_columns=box_vectors_are_columns)
+    
+    return  coordiantes # whole molecules can be jumping around on the edges as the box evolves, that is fine.
+
+no_jump_ = remove_PBC_traj_
+
+##
 
 try:
     from numba import jit
@@ -302,8 +345,8 @@ try:
     interval_W_F_ = jit(nopython = True, fastmath = True)(interval_W_F_)
 	
     # no jump:
-    no_jump_ =  jit(nopython = True, fastmath = True)(no_jump_)
-    wrap_COMs_ = jit(nopython = True, fastmath = True)(wrap_COMs_)
+    #no_jump_ =  jit(nopython = True, fastmath = True)(no_jump_)
+    #wrap_COMs_ = jit(nopython = True, fastmath = True)(wrap_COMs_)
     #
 
 except:
