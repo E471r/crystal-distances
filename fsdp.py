@@ -1,8 +1,11 @@
+from re import A, X
 import numpy as np
 
 import matplotlib.pyplot as plt
 
 from utils import sta_array_, TIMER
+
+from utils_jit import cdist_, cdist_rbf_
 
 ##
 
@@ -102,6 +105,8 @@ def outputs_FSDP_(nn_hd : np.ndarray, inds_cluster_centres : np.ndarray):
 def plot_fsdp_(x, y, inds_above_point, cut_off):
     plt.scatter(x, y, label = 'not cluster centres')
     plt.scatter(x[inds_above_point], y[inds_above_point], label = 'cluster centres')
+    for i in inds_above_point:
+        plt.text(x[i], y[i], str(i), color="black", fontsize=8)
     plt.plot([0,x.max()], [cut_off,cut_off], color='orange')
     plt.legend(loc='center left', bbox_to_anchor=(1.04, 0.5))
     plt.show()
@@ -148,11 +153,24 @@ def d1_decision_flat_(pd : np.ndarray, cut_off : float = 0.5, verbose: bool = Tr
 
     return inds_above_point
 
+    """
+def d1_decision_flat_topK_(pd : np.ndarray, K : int, verbose: bool = True):
+
+    d = pd[:,1]
+    inds_above_point = np.where(d > cut_off)[0]
+
+    if verbose:
+        print(len(inds_above_point), 'orange points.')
+        plot_fsdp_(pd[:,0], pd[:,1], inds_above_point, cut_off) 
+    else: pass
+
+    return inds_above_point
+    """
 class FSDP:
     ''' Wrapper class for the three FSDP functions above, to organise the steps:
     
-        ## Minimal example: [not valid now]
-        ## cluster_assignments = FSDP(x = D, x_is_distance_matrix = True, gamma = 0.01).return_cluster_assignments()
+        Minimal example:
+        cluster_assignments = FSDP(x = D, x_is_distance_matrix = True, co = 0.01).return_cluster_assignments()
             
     '''
     def __init__(self,
@@ -222,11 +240,10 @@ class FSDP:
         return self.cluster_assignments
 
     def evaluate_(self, y, verbose : bool = True):
-        ''' not sure if this works.
-        '''
         Ny = y.shape[0]
         y_cluster_assignments = []
         if self.x_is_distance_matrix:
+            print('y should be D ~ (Ny,Nx)')
             print('not implemented')
         else:
             if verbose: timer = TIMER(Ny) ; a = 0
