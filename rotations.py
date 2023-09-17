@@ -249,7 +249,7 @@ def get_rotational_hists_traj_(R,
         
 
 def get_rotational_hists_(Rs : list or np.ndarray,
-                          supervised = [3,6,9], 
+                          supervised = [3,7,9], 
                           # ^ indices of 3 atoms, or provide the initilased class here.
                           n_bins = 20,
                           use_kde = False,
