@@ -8,6 +8,23 @@ from utils_einsum import cdist_sqeuclidean_row_
 
 ## Intra-molecular torsions:
 
+def clamp_chiral_(Rs, inds_chiral):
+    """ inds_chiral : (4,) list : first element is index of chiral centre, others are bonded to it.
+    """
+    inputs = clamp_list_(Rs) ; n_trajs =  len(inputs)
+    outputs = []
+    zeros = 0.0
+    for i in range(n_trajs):
+        AB_AC_AD = inputs[i][:,:,inds_chiral[1:4],:] - inputs[i][:,:,inds_chiral[0:1],:]
+        sign = np.sign((np.cross(AB_AC_AD[:,:,0,:],AB_AC_AD[:,:,1,:])*AB_AC_AD[:,:,2,:]).sum(-1)) # (N,m)
+        ratio = np.where(sign==-1,1,0).sum(1)/sign.shape[1]
+        #print(i, ratio)
+        outputs.append(inputs[i] * sign[:,:,np.newaxis,np.newaxis])
+        if ratio.sum() != 0: zeros += 1.0
+        else: pass
+    print(zeros/n_trajs)
+    return outputs
+
 def get_torsions_(Rs : np.ndarray or list, torsion_indices : list or np.ndarray):
     
     ''' 
