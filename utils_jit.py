@@ -303,7 +303,7 @@ def reciprocal_boxes_(boxes, vector_axis=-2):
     v2 = np.take(boxes, 1, axis=vector_axis)
     v3 = np.take(boxes, 2, axis=vector_axis)
     v2crossv3 = np.cross(v2,v3) ; Vol = np.einsum('...i,...i->...',v1,v2crossv3)[...,np.newaxis]
-    inv = np.stack([v2crossv3 / Vol, np.cross(v3,v1) / Vol, np.cross(v1,v2) / Vol], axis=vector_axis)
+    inv = np.stack([v2crossv3 / Vol, np.cross(v3,v1) / Vol, np.cross(v1,v2) / Vol], axis=-2)
     inv = np.einsum('...ij->...ji',inv)
     return inv
     
