@@ -159,7 +159,7 @@ def SOL_distance_(CsCt_list_X : list, CsCt_list_Y : list = None):
                 Output[i,j] = d
         return Output
 
- def HDL_distance_(csAs, lands, gamma = 1.5):
+def HDL_distance_(csAs, lands, gamma = 1.5):
     ''' HDL (only symmetric version here)
     '''
     h = get_landmark_histograms_(clamp_list_(csAs), lands, gamma = gamma, force_normalise=True)
