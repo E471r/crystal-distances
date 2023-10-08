@@ -306,7 +306,7 @@ def reciprocal_boxes_(boxes, vector_axis=-2):
     inv = np.stack([v2crossv3 / Vol, np.cross(v3,v1) / Vol, np.cross(v1,v2) / Vol], axis=-2)
     inv = np.einsum('...ij->...ji',inv)
     return inv
-    
+
 def wrap_traj_np_(coordinates,  # (...,m_molecules, n_atoms_mol, 3)
                   boxes,        # (...,3, 3)
                   box_vectors_are_columns = True,
@@ -316,29 +316,31 @@ def wrap_traj_np_(coordinates,  # (...,m_molecules, n_atoms_mol, 3)
     else:                        
         string = '...jkl,...lm->...jkm' ; vector_axis=-1
     #inv_boxes = reciprocal_boxes_(boxes, vector_axis)
-    return np.einsum(string, np.mod(np.einsum(string, coordinates, np.linalg.inv(boxes)), 1.0), boxes)
+    inv_boxes = np.linalg.inv(boxes)
+    return np.einsum(string, np.mod(np.einsum(string, coordinates, inv_boxes), 1.0), boxes)
 
 def remove_PBC_traj_(coordinates,
                      boxes,
                      box_vectors_are_columns = True
                     ):
-    coordinates = np.array(coordinates, dtype=np.float64)
-    boxes = np.array(boxes, dtype=np.float64)
-    coordinates = clamp_shape_traj_(coordinates, minimum_shape=3) # -> [N,m,n,3] ; N >=1
-    boxes = clamp_shape_traj_(boxes, minimum_shape=2)             # -> [N,3,3]   ; N >=1
+    coordinates = clamp_shape_traj_(np.array(coordinates, dtype=np.float64), minimum_shape=3) # -> [N,m,n,3] ; N >=1
+    boxes = clamp_shape_traj_(np.array(boxes, dtype=np.float64), minimum_shape=2)             # -> [N,3,3]   ; N >=1
+    inv_boxes = np.linalg.inv(boxes)
     
-    if box_vectors_are_columns: axis = -2
-    else :                      axis = -1
-    half_box_lengths = 0.5*np.linalg.norm(boxes, axis=axis)[:,np.newaxis,np.newaxis,:]
-
-    coordinates = wrap_traj_np_(coordinates, boxes, box_vectors_are_columns = box_vectors_are_columns)
-
-    some_atom_in_molecules = coordinates[:,:,2:3,:] # this effects it. it should not.
-    coordinates = wrap_traj_np_(coordinates - some_atom_in_molecules + half_box_lengths, boxes, box_vectors_are_columns=box_vectors_are_columns) 
-    coordinates += some_atom_in_molecules
-
-    # method is not yet stable for some reason.
-    return  coordinates.astype(np.float32) # whole molecules can be jumping around on the edges as the box evolves, that is fine.
+    if box_vectors_are_columns: 
+        string = '...jkl,...ml->...jkm' ; vector_axis=-2
+    else:                        
+        string = '...jkl,...lm->...jkm' ; vector_axis=-1
+    #inv_boxes = reciprocal_boxes_(boxes, vector_axis)
+    inv_boxes = np.linalg.inv(boxes)
+    
+    coordinates_rec = np.mod(np.einsum(string, coordinates, inv_boxes), 1.0)
+    atom = coordinates_rec[:,:,2:3,:]
+    coordinates = np.mod(coordinates_rec - atom + 0.5, 1.0) + atom
+    coordinates = np.einsum(string, coordinates, boxes)
+    coordinates -= np.mean(coordinates,axis=(1,2),keepdims=True)
+    
+    return coordinates
 
 no_jump_ = remove_PBC_traj_
 #"""
