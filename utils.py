@@ -248,7 +248,8 @@ def rigid_allign_(X : np.ndarray,
     if masses is not None:
         ws = np.array(masses).flatten()[subset_inds,np.newaxis]
         ws /= ws.sum()
-    
+    else: pass
+        
     ##
     ws_ = np.eye(z_.shape[0]) 
     if masses is not None: ws_ *= ws
