@@ -231,7 +231,7 @@ def rigid_allign_(X : np.ndarray,
         d3_subset_inds_planar : if all subset_inds are atoms which may sometimes appear on 
                                 a 2D plane (e.g., all are part of a ring) set this to True.
         verbose : bool.
-        masses : mass weighted allign.
+        masses : (n,) shaped list or array for mass weighted allign.
 
     Output:
         Y : (m,n,3) shaped array of aligned conformers, where
