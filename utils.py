@@ -120,7 +120,7 @@ def get_tripod_(x):
     v02 = x[0]-x[2]
     u012 = np.cross(v01,v02)
     return np.stack([v01,v02,u012],axis=0)
-
+"""
 def rigid_allign_(X : np.ndarray,
                   z : np.ndarray,
                   subset_inds : list = None,
@@ -203,6 +203,103 @@ def rigid_allign_(X : np.ndarray,
             Y[i,:] = X[i] - mu_x_ + mu_z_
 
     return Y
+"""
+
+def rigid_allign_(X : np.ndarray,
+                  z : np.ndarray,
+                  subset_inds : list = None,
+                  centre_on_subset0 : bool = False,
+                  d3_subset_inds_planar : bool = False,
+                  verbose : bool = False,
+                  masses = None):
+
+    ''' Rigid body alignment (just one iteration) of cartesian coordinates: 
+    
+    Inputs:
+        X : (m,n,3) shaped array to be aligned to fixed reference (z)
+            m = number of molecules, or frames containing one molecule.
+            n = number of atoms in the molecule.
+            3 = three cartesian coordinates.
+        z : (n,3) shaped array : structure alignment template.
+
+    Parameters:
+        subset_inds : list (default is None : all atoms used) of indices 
+                      for atoms to use in alignment (e.g., [1,2,3,..]).
+        centre_on_subset0 : if True (default is False) and subset_inds is not None, 
+                            the first atom in subset_inds list will be used instead 
+                            of centre of mass, as the centre for the rotation fit.
+        d3_subset_inds_planar : if all subset_inds are atoms which may sometimes appear on 
+                                a 2D plane (e.g., all are part of a ring) set this to True.
+        verbose : bool.
+        masses : mass weighted allign.
+
+    Output:
+        Y : (m,n,3) shaped array of aligned conformers, where
+             all conformers X[i] least squares superposed to fit on z.
+    '''
+
+    X = np.array(X) ; N,n,d = X.shape # (N,n,d) 
+    z = np.array(z)                   # (n,d)
+
+    if subset_inds is None: subset_inds = np.arange(n).tolist()
+    else: subset_inds = np.array(subset_inds).flatten().tolist()
+ 
+    X_ = X[:,subset_inds,:] ; z_ = z[subset_inds,:]
+    
+    ##
+    ws_ = np.eye(z_.shape[0]) 
+    if masses is not None:
+        masses = np.array(masses).flatten()
+        ws = masses/masses.sum()
+        ws_ *= (ws*n)
+        ws = ws[:,np.newaxis]
+    else: pass
+    ##
+
+    if centre_on_subset0: mu_z_ =  np.array(z_[0])[np.newaxis,:]
+    else: 
+        if masses is not None: mu_z_ = (z_*ws[subset_inds]).sum(0,keepdims=True)
+        else:                  mu_z_ = z_.mean(0, keepdims=True)
+    z_ -= mu_z_
+
+    Y = np.zeros([N,n,d])
+    for i in range(N):
+        x_ = np.array(X_[i]) # (n_s, 3)
+        
+        if centre_on_subset0:  mu_x_ = np.array(x_[0])[np.newaxis,:]
+        else: 
+            if masses is not None: mu_x_ = (x_*ws).sum(0,keepdims=True)
+            else:                  mu_x_ = x_.mean(0, keepdims=True)
+
+        x_ -= mu_x_
+
+        if d3_subset_inds_planar:
+            R = least_squares_rotation_matrix_(get_tripod_(x_[[0,1,2]]),
+                                               get_tripod_(z_[[0,1,2]]),
+                                               np.eye(3))
+        else:
+            R = least_squares_rotation_matrix_(x_, z_, ws_)
+
+        err_before = np.linalg.norm(x_-z_)
+        y_ = x_.dot(R)
+        err_after = np.linalg.norm(y_-z_)
+
+        if err_after < err_before:
+            if verbose:
+                stars = (10*(err_before-err_after)/err_before).astype(int)
+                print('% err drop:  [','*'*stars,'.'*(10-stars),']')
+            else: pass
+            Xi_ali = (X[i] - mu_x_).dot(R) + mu_z_
+            Y[i,:] = Xi_ali
+
+        else:
+            if verbose:
+                print('no change at frame:', i) # rotation skipped.
+            else: pass
+            Y[i,:] = X[i] - mu_x_ + mu_z_
+
+    return Y
+
 
 ## Timer:
 
