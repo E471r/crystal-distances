@@ -252,13 +252,16 @@ def rigid_allign_(X : np.ndarray,
         masses = np.array(masses).flatten()
         ws = masses/masses.sum()
         ws_ *= (ws*n)
+
         ws = ws[:,np.newaxis]
+        ws_subset = ws[subset_inds]
+        ws_subset /= ws_subset.sum()
     else: pass
     ##
 
     if centre_on_subset0: mu_z_ =  np.array(z_[0])[np.newaxis,:]
     else: 
-        if masses is not None: mu_z_ = (z_*ws[subset_inds]).sum(0,keepdims=True)
+        if masses is not None: mu_z_ = (z_*ws_subset).sum(0,keepdims=True)
         else:                  mu_z_ = z_.mean(0, keepdims=True)
     z_ -= mu_z_
 
@@ -268,7 +271,7 @@ def rigid_allign_(X : np.ndarray,
         
         if centre_on_subset0:  mu_x_ = np.array(x_[0])[np.newaxis,:]
         else: 
-            if masses is not None: mu_x_ = (x_*ws).sum(0,keepdims=True)
+            if masses is not None: mu_x_ = (x_*ws_subset).sum(0,keepdims=True)
             else:                  mu_x_ = x_.mean(0, keepdims=True)
 
         x_ -= mu_x_
